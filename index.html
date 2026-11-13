@@ -39,10 +39,14 @@
     .download:hover:not(:disabled) { background: var(--soft); }
     .dates { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .date-row { display: flex; flex-direction: column; min-width: 0; border: 1px solid #e9ede6; border-radius: 10px; padding: 13px; gap: 11px; }
-    .date-header { display: flex; align-items: center; width: 100%; gap: 10px; }
+    .date-header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; width: 100%; gap: 10px; }
+    .date-current { display: grid; gap: 5px; }
+    .date-current .weekday { margin-left: 0; }
+    .next-month { display: grid; gap: 4px; padding-left: 10px; border-left: 1px solid var(--line); }
+    .next-month-caption { font-size: 10px; color: var(--muted); }
+    .next-month-date { font-size: 12px; color: #4b6b54; line-height: 1.5; }
     .time-slots { display: grid; width: 100%; gap: 6px; }
     .time-slot { display: block; background: #f3f6f0; border-radius: 6px; padding: 7px 8px; color: #4b6b54; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .date-index { width: 16px; color: #a1aaa2; font-size: 11px; font-variant-numeric: tabular-nums; }
     .date-label { font-size: 13px; font-weight: 550; white-space: nowrap; }
     .weekday { margin-left: auto; font-size: 11px; color: #64806a; white-space: nowrap; }
     .list-bottom { margin: 23px 0 0; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #98a097; }
@@ -79,6 +83,8 @@
     @media (max-width: 640px) { .shell { padding: 0 20px; } .topbar { min-height: 78px; } .today { font-size: 11px; gap: 6px; } .brand { font-size: 15px; gap: 8px; } .brand-mark { width: 30px; height: 30px; } main { padding-top: 32px; } .intro { align-items: flex-start; margin-bottom: 26px; gap: 14px; } h1 { font-size: 26px; letter-spacing: -.5px; } .eyebrow { font-size: 11px; } .range { font-size: 12px; } .scope { padding: 7px 9px; font-size: 10px; margin-top: 4px; } .scope svg { display: none; } .layout { grid-template-columns: 1fr; } .aside { grid-row: 1; grid-template-columns: 1fr; } .summary { display: flex; align-items: center; justify-content: space-between; padding: 17px 22px; } .count-line { margin: 0; gap: 9px; } .count { font-size: 45px; line-height: 1; letter-spacing: -2px; } .summary::after { top: -25px; right: 55px; } .calendar-card { display: none; } .list-card { min-height: 0; padding: 22px 19px; } .dates { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .date-row { padding: 12px 9px; gap: 7px; min-height: 54px; } .date-index { display: none; } .date-label { font-size: 12px; } .weekday { font-size: 10px; } footer { padding-top: 22px; font-size: 10px; } }
     @media (max-width: 350px) { .dates { grid-template-columns: 1fr; } .scope { display: none; } .today-dot { display: none; } }
     @media (max-width: 640px) { .time-slot { padding: 7px 5px; font-size: 11px; } .date-header { gap: 7px; } }
+    @media (max-width: 640px) { .dates { grid-template-columns: 1fr; } .time-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 350px) { .time-slots { grid-template-columns: 1fr; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
   </style>
 </head>
@@ -118,8 +124,16 @@
       const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
       const pad = n => String(n).padStart(2, '0');
       const timeSlots = Object.freeze(['14:00–15:00', '23:00–次日 00:00']);
+      function nextMonthDate(iso) {
+        const [year, month, day] = iso.split('-').map(Number);
+        const date = new Date(Date.UTC(year, month, day));
+        if (date.getUTCDate() !== day) return null;
+        const nextYear = date.getUTCFullYear();
+        const nextMonth = date.getUTCMonth() + 1;
+        return { year: nextYear, month: nextMonth, day, iso: `${nextYear}-${pad(nextMonth)}-${pad(day)}` };
+      }
       function formatSchedule(workdays) {
-        return workdays.map(item => `${item.iso} ${item.weekdayLabel}\n  ${timeSlots.join('\n  ')}`).join('\n\n');
+        return workdays.map(item => `${item.iso} ${item.weekdayLabel}（下月同日：${item.nextMonth?.iso ?? '无对应日期'}）\n  ${timeSlots.join('\n  ')}`).join('\n\n');
       }
       function todayISO(now = new Date()) {
         const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
@@ -135,11 +149,12 @@
         const days = Array.from({ length: lastDay }, (_, index) => {
           const number = index + 1;
           const weekday = new Date(Date.UTC(year, month - 1, number)).getUTCDay();
-          return { day: number, weekday, weekdayLabel: weekdays[weekday], iso: `${year}-${pad(month)}-${pad(number)}`, remaining: number > day && weekday > 0 && weekday < 6 };
+          const iso = `${year}-${pad(month)}-${pad(number)}`;
+          return { day: number, weekday, weekdayLabel: weekdays[weekday], iso, nextMonth: nextMonthDate(iso), remaining: number > day && weekday > 0 && weekday < 6 };
         });
         return { iso, year, month, day, lastDay, weekdayLabel: weekdays[base.getUTCDay()], days, workdays: days.filter(item => item.remaining) };
       }
-      globalThis.Workdays = Object.freeze({ todayISO, buildMonth, timeSlots, formatSchedule });
+      globalThis.Workdays = Object.freeze({ todayISO, buildMonth, timeSlots, formatSchedule, nextMonthDate });
     })();
   </script>
   <script>
@@ -160,13 +175,21 @@
         $('calendar-title').textContent = `${month} 月`;
         $('calendar-year').textContent = year;
         $('footer-month').textContent = `${year}.${String(month).padStart(2, '0')}`;
-        $('dates').replaceChildren(...workdays.map((item, index) => {
+        $('dates').replaceChildren(...workdays.map(item => {
           const li = document.createElement('li');
           li.className = 'date-row';
-          const number = document.createElement('span'); number.className = 'date-index'; number.textContent = String(index + 1).padStart(2, '0'); number.setAttribute('aria-hidden', 'true');
           const date = document.createElement('time'); date.className = 'date-label'; date.dateTime = item.iso; date.textContent = `${month} 月 ${item.day} 日`;
           const weekday = document.createElement('span'); weekday.className = 'weekday'; weekday.textContent = item.weekdayLabel;
-          const header = document.createElement('div'); header.className = 'date-header'; header.append(number, date, weekday);
+          const currentDate = document.createElement('div'); currentDate.className = 'date-current'; currentDate.append(date, weekday);
+          const corresponding = document.createElement('div'); corresponding.className = 'next-month';
+          const caption = document.createElement('span'); caption.className = 'next-month-caption'; caption.textContent = '下月同日';
+          const nextDate = document.createElement(item.nextMonth ? 'time' : 'span'); nextDate.className = 'next-month-date';
+          if (item.nextMonth) {
+            nextDate.dateTime = item.nextMonth.iso;
+            nextDate.textContent = `${item.nextMonth.year !== year ? `${item.nextMonth.year} 年 ` : ''}${item.nextMonth.month} 月 ${item.nextMonth.day} 日`;
+          } else { nextDate.textContent = '无对应日期'; }
+          corresponding.append(caption, nextDate);
+          const header = document.createElement('div'); header.className = 'date-header'; header.append(currentDate, corresponding);
           const slots = document.createElement('div'); slots.className = 'time-slots';
           for (const text of Workdays.timeSlots) {
             const slot = document.createElement('span'); slot.className = 'time-slot'; slot.textContent = text; slots.append(slot);
