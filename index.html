@@ -14,7 +14,7 @@
     button:focus-visible { outline: 3px solid #85b39a; outline-offset: 4px; }
     button:disabled { cursor: default; opacity: .45; }
     svg { display: block; flex-shrink: 0; }
-    .shell { max-width: 1152px; margin: auto; padding: 0 40px; }
+    .shell { max-width: 1800px; margin: auto; padding: 0 40px; }
     .topbar { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
     .brand { display: flex; align-items: center; gap: 11px; font-size: 17px; font-weight: 650; letter-spacing: 1px; }
     .brand-mark { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--ink); color: white; }
@@ -84,6 +84,8 @@
     .toast.visible { opacity: 1; transform: translate(-50%, 0); }
     [hidden] { display: none !important; }
     @media (min-width: 1000px) { .date-row:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+    @media (min-width: 1200px) { .layout { grid-template-columns: minmax(0, 1fr) 420px; } }
+    @media (min-width: 1440px) { .dates { grid-template-columns: repeat(3, minmax(0, 1fr)); } .date-row:last-child:nth-child(odd) { grid-column: auto; } }
     @media (max-width: 900px) { .shell { padding: 0 25px; } .layout { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; } .list-card { padding: 23px; } .dates { grid-template-columns: 1fr; } .date-row { min-height: 46px; } }
     @media (max-width: 640px) { .shell { padding: 0 20px; } .topbar { min-height: 78px; } .today { font-size: 11px; gap: 6px; } .brand { font-size: 15px; gap: 8px; } .brand-mark { width: 30px; height: 30px; } main { padding-top: 32px; } .intro { align-items: flex-start; margin-bottom: 26px; gap: 14px; } h1 { font-size: 26px; letter-spacing: -.5px; } .eyebrow { font-size: 11px; } .range { font-size: 12px; } .layout { grid-template-columns: 1fr; } .aside { grid-row: 1; grid-template-columns: 1fr; } .summary { display: flex; align-items: center; justify-content: space-between; padding: 17px 22px; } .count-line { margin: 0; gap: 9px; } .count { font-size: 45px; line-height: 1; letter-spacing: -2px; } .summary::after { top: -25px; right: 55px; } .calendar-card { display: none; } .list-card { min-height: 0; padding: 22px 19px; } .dates { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .date-row { padding: 12px 9px; gap: 7px; min-height: 54px; } .date-index { display: none; } .date-label { font-size: 12px; } .weekday { font-size: 10px; } footer { padding-top: 22px; font-size: 10px; } }
     @media (max-width: 350px) { .dates { grid-template-columns: 1fr; } .today-dot { display: none; } }
