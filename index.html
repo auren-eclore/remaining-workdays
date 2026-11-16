@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f7f3">
-  <meta name="description" content="自动列出从明天到本月月底的工作日，每天安排 14:00–15:00 和 23:00–次日 00:00，支持复制与下载。">
+  <meta name="description" content="自动列出从今天到本月月底的工作日，每天安排 14:00–15:00 和 23:00–次日 00:00，支持复制与下载。">
   <title>本月剩余工作日</title>
   <style>
     :root { color-scheme: light; --bg: #f6f7f3; --ink: #223c35; --muted: #77817b; --green: #35705b; --soft: #eaf2e9; --line: #e5e9e2; }
@@ -111,7 +111,7 @@
           </div></div>
           <ol class="dates" id="dates"></ol>
           <div class="empty" id="empty" hidden><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 5 2.5 2.5L16 13"/></svg><strong>本月暂无可安排日期</strong></div>
-          <p class="list-bottom" id="list-bottom"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>从明天开始，按日期排序</p>
+          <p class="list-bottom" id="list-bottom"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>从今天开始，按日期排序</p>
         </section>
         <aside class="aside" aria-label="工作日概览">
           <section class="summary" aria-label="可安排日期总数"><p class="summary-label">可安排日期</p><p class="count-line"><span class="count" id="count">—</span><span class="count-unit">天</span></p></section>
@@ -155,7 +155,7 @@
           const number = index + 1;
           const weekday = new Date(Date.UTC(year, month - 1, number)).getUTCDay();
           const iso = `${year}-${pad(month)}-${pad(number)}`;
-          return { day: number, weekday, weekdayLabel: weekdays[weekday], iso, nextMonth: nextMonthDate(iso), remaining: number > day && weekday > 0 && weekday < 6 };
+          return { day: number, weekday, weekdayLabel: weekdays[weekday], iso, nextMonth: nextMonthDate(iso), remaining: number >= day && weekday > 0 && weekday < 6 };
         });
         return { iso, year, month, day, lastDay, weekdayLabel: weekdays[base.getUTCDay()], days, workdays: days.filter(item => item.remaining && item.nextMonth?.isWeekday) };
       }
@@ -175,7 +175,7 @@
         $('today').dateTime = iso;
         $('today').textContent = `今天 ${month} 月 ${day} 日 · ${weekdayLabel}`;
         $('month-label').textContent = `${year} 年 / ${String(month).padStart(2, '0')} 月`;
-        $('range').textContent = day === lastDay ? `${month} 月已到最后一天` : `${month} 月 ${day + 1} 日 — ${month} 月 ${lastDay} 日`;
+        $('range').textContent = `${month} 月 ${day} 日 — ${month} 月 ${lastDay} 日`;
         $('count').textContent = workdays.length;
         $('calendar-title').textContent = `${month} 月`;
         $('calendar-year').textContent = year;
