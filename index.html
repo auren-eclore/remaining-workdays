@@ -49,7 +49,9 @@
     .next-month.is-workday .next-month-caption { color: #4a7040; }
     .next-month.is-workday .next-month-date, .next-month.is-workday .next-month-weekday { color: #244e1e; font-weight: 700; }
     .time-slots { display: grid; width: 100%; gap: 6px; }
-    .time-slot { display: block; background: #f3f6f0; border-radius: 6px; padding: 7px 8px; color: #4b6b54; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .time-slot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; background: #f3f6f0; border-radius: 6px; padding: 7px 8px; color: #4b6b54; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .time-slot.is-active { background: #fff0cc; color: #704405; box-shadow: inset 0 0 0 1px #dca943; font-weight: 650; }
+    .time-slot-status { background: #825009; color: #fff; border-radius: 4px; padding: 2px 5px; font-size: 10px; line-height: 1.5; }
     .date-label { font-size: 13px; font-weight: 550; white-space: nowrap; }
     .weekday { margin-left: auto; font-size: 11px; color: #64806a; white-space: nowrap; }
     .list-bottom { margin: 23px 0 0; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #98a097; }
@@ -127,6 +129,7 @@
       const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
       const pad = n => String(n).padStart(2, '0');
       const timeSlots = Object.freeze(['14:00–15:00', '23:00–次日 00:00']);
+      const clockFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
       function nextMonthDate(iso) {
         const [year, month, day] = iso.split('-').map(Number);
         const date = new Date(Date.UTC(year, month, day));
@@ -139,11 +142,15 @@
       function formatSchedule(workdays) {
         return workdays.map(item => `本月种菜：${item.iso} ${item.weekdayLabel}（下月开车：${item.nextMonth ? `${item.nextMonth.iso} ${item.nextMonth.weekdayLabel}` : '无对应日期'}）\n  ${timeSlots.join('\n  ')}`).join('\n\n');
       }
-      function todayISO(now = new Date()) {
-        const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+      function clockState(now = new Date()) {
+        const parts = clockFormatter.formatToParts(now);
         const get = name => parts.find(part => part.type === name).value;
-        return `${get('year')}-${get('month')}-${get('day')}`;
+        const iso = `${get('year')}-${get('month')}-${get('day')}`;
+        const minutes = Number(get('hour')) * 60 + Number(get('minute'));
+        const activeSlotIndex = minutes >= 14 * 60 && minutes < 15 * 60 ? 0 : minutes >= 23 * 60 && minutes < 24 * 60 ? 1 : -1;
+        return { iso, activeSlotIndex };
       }
+      function todayISO(now = new Date()) { return clockState(now).iso; }
       function buildMonth(iso) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) throw new RangeError('日期格式无效');
         const [year, month, day] = iso.split('-').map(Number);
@@ -158,17 +165,19 @@
         });
         return { iso, year, month, day, lastDay, weekdayLabel: weekdays[base.getUTCDay()], days, workdays: days.filter(item => item.remaining && item.nextMonth?.isWeekday) };
       }
-      globalThis.Workdays = Object.freeze({ todayISO, buildMonth, timeSlots, formatSchedule, nextMonthDate });
+      globalThis.Workdays = Object.freeze({ todayISO, clockState, buildMonth, timeSlots, formatSchedule, nextMonthDate });
     })();
   </script>
   <script>
     (() => {
       const $ = id => document.getElementById(id);
       let current;
+      let currentSlotIndex;
       let toastTimer;
       function render() {
-        const iso = Workdays.todayISO();
-        if (current?.iso === iso) return;
+        const { iso, activeSlotIndex } = Workdays.clockState();
+        if (current?.iso === iso && currentSlotIndex === activeSlotIndex) return;
+        currentSlotIndex = activeSlotIndex;
         current = Workdays.buildMonth(iso);
         const { year, month, day, lastDay, weekdayLabel, days, workdays } = current;
         $('today').dateTime = iso;
@@ -199,8 +208,15 @@
           }
           const header = document.createElement('div'); header.className = 'date-header'; header.append(currentDate, corresponding);
           const slots = document.createElement('div'); slots.className = 'time-slots';
-          for (const text of Workdays.timeSlots) {
-            const slot = document.createElement('span'); slot.className = 'time-slot'; slot.textContent = text; slots.append(slot);
+          for (const [index, text] of Workdays.timeSlots.entries()) {
+            const active = item.iso === iso && index === activeSlotIndex;
+            const slot = document.createElement('span'); slot.className = `time-slot${active ? ' is-active' : ''}`;
+            const label = document.createElement('span'); label.textContent = text; slot.append(label);
+            if (active) {
+              slot.setAttribute('aria-current', 'time');
+              const status = document.createElement('span'); status.className = 'time-slot-status'; status.textContent = '进行中'; slot.append(status);
+            }
+            slots.append(slot);
           }
           li.append(header, slots);
           return li;
@@ -248,7 +264,7 @@
         toast('种菜计划已下载');
       });
       render();
-      setInterval(render, 15000);
+      setInterval(render, 1000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
       window.addEventListener('focus', render);
     })();
