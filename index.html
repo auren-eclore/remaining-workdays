@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f7f3">
-  <meta name="description" content="查看本月种菜及下月开车日期，每天包含 14:00–15:00 和 23:00–次日 00:00 两个时段，支持复制与下载。">
+  <meta name="description" content="查看本月种菜日期、下月开车日期和对应的可种时段，支持复制与下载。">
   <title>本月种菜计划</title>
   <style>
     :root { color-scheme: light; --bg: #f6f7f3; --ink: #223c35; --muted: #77817b; --green: #35705b; --soft: #eaf2e9; --line: #e5e9e2; }
@@ -142,7 +142,13 @@
         return { year: nextYear, month: nextMonth, day, iso: `${nextYear}-${pad(nextMonth)}-${pad(day)}`, weekday, weekdayLabel: weekdays[weekday], isWeekday: weekday >= 1 && weekday <= 5 };
       }
       function formatSchedule(workdays) {
-        return workdays.map(item => `本月种菜：${item.iso} ${item.weekdayLabel}（下月开车：${item.nextMonth ? `${item.nextMonth.iso} ${item.nextMonth.weekdayLabel}` : '无对应日期'}）\n  ${timeSlots.join('\n  ')}`).join('\n\n');
+        return workdays.map(item => `本月种菜：${item.iso} ${item.weekdayLabel}（下月开车：${item.nextMonth.iso} ${item.nextMonth.weekdayLabel}）\n  ${item.slots.join('\n  ')}`).join('\n\n');
+      }
+      function plantingSlots(nextMonth) {
+        if (!nextMonth) return [];
+        if (nextMonth.weekday === 0) return [timeSlots[0]];
+        if (nextMonth.weekday === 6) return [timeSlots[1]];
+        return timeSlots;
       }
       function clockState(now = new Date()) {
         const parts = clockFormatter.formatToParts(now);
@@ -163,9 +169,10 @@
           const number = index + 1;
           const weekday = new Date(Date.UTC(year, month - 1, number)).getUTCDay();
           const iso = `${year}-${pad(month)}-${pad(number)}`;
-          return { day: number, weekday, weekdayLabel: weekdays[weekday], iso, nextMonth: nextMonthDate(iso), remaining: number >= day };
+          const nextMonth = nextMonthDate(iso);
+          return { day: number, weekday, weekdayLabel: weekdays[weekday], iso, nextMonth, slots: plantingSlots(nextMonth), remaining: number >= day };
         });
-        return { iso, year, month, day, lastDay, weekdayLabel: weekdays[base.getUTCDay()], days, workdays: days.filter(item => item.remaining && item.nextMonth?.isWeekday) };
+        return { iso, year, month, day, lastDay, weekdayLabel: weekdays[base.getUTCDay()], days, workdays: days.filter(item => item.remaining && item.slots.length > 0) };
       }
       globalThis.Workdays = Object.freeze({ todayISO, clockState, buildMonth, timeSlots, formatSchedule, nextMonthDate });
     })();
@@ -210,8 +217,8 @@
           }
           const header = document.createElement('div'); header.className = 'date-header'; header.append(currentDate, corresponding);
           const slots = document.createElement('div'); slots.className = 'time-slots';
-          for (const [index, text] of Workdays.timeSlots.entries()) {
-            const active = item.iso === iso && index === activeSlotIndex;
+          for (const text of item.slots) {
+            const active = item.iso === iso && text === Workdays.timeSlots[activeSlotIndex];
             const slot = document.createElement('span'); slot.className = `time-slot${active ? ' is-active' : ''}`;
             const label = document.createElement('span'); label.textContent = text; slot.append(label);
             if (active) {
