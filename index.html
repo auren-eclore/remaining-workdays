@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f7f3">
-  <meta name="description" content="查看本月种菜日期、下月开车日期和对应的可种时段，支持复制与下载。">
+  <meta name="description" content="查看本月种菜日、可种时段和下月对应的收菜日，支持复制与下载。">
   <title>本月种菜计划</title>
   <style>
     :root { color-scheme: light; --bg: #f6f7f3; --ink: #223c35; --muted: #77817b; --green: #35705b; --soft: #eaf2e9; --line: #e5e9e2; }
@@ -49,8 +49,9 @@
     .planting-date { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 7px; }
     .date-current .weekday { margin-left: 0; }
     .next-month { display: grid; align-content: center; gap: 4px; padding: 10px; border: 1px solid #9fc68b; border-radius: 0 9px 9px 0; background: #d7edc7; box-shadow: inset 3px 0 0 #4a7e36; }
-    .date-caption { font-size: 10px; color: var(--muted); }
-    .next-month-caption { font-size: 10px; color: #4a7040; }
+    .date-caption, .next-month-caption { font-size: 12px; font-weight: 650; line-height: 1.4; }
+    .date-caption { color: var(--green); }
+    .next-month-caption { color: #4a7040; }
     .next-month-date, .next-month-weekday { color: #244e1e; font-weight: 700; }
     .next-month-date { font-size: 12px; line-height: 1.5; }
     .next-month-weekday { font-size: 11px; line-height: 1.4; }
@@ -147,7 +148,7 @@
         return { year: nextYear, month: nextMonth, day, iso: `${nextYear}-${pad(nextMonth)}-${pad(day)}`, weekday, weekdayLabel: weekdays[weekday], isWeekday: weekday >= 1 && weekday <= 5 };
       }
       function formatSchedule(workdays) {
-        return workdays.map(item => `本月种菜：${item.iso} ${item.weekdayLabel}（下月开车：${item.nextMonth.iso} ${item.nextMonth.weekdayLabel}）\n  ${item.slots.join('\n  ')}`).join('\n\n');
+        return workdays.map(item => `种菜日：${item.iso} ${item.weekdayLabel}\n  ${item.slots.join('\n  ')}\n收菜日：${item.nextMonth.iso} ${item.nextMonth.weekdayLabel}`).join('\n\n');
       }
       function plantingSlots(nextMonth) {
         if (!nextMonth) return [];
@@ -207,7 +208,7 @@
           li.className = 'date-row';
           const date = document.createElement('time'); date.className = 'date-label'; date.dateTime = item.iso; date.textContent = `${month} 月 ${item.day} 日`;
           const weekday = document.createElement('span'); weekday.className = 'weekday'; weekday.textContent = item.weekdayLabel;
-          const currentCaption = document.createElement('span'); currentCaption.className = 'date-caption'; currentCaption.textContent = '本月种菜';
+          const currentCaption = document.createElement('span'); currentCaption.className = 'date-caption'; currentCaption.textContent = '种菜日';
           const plantingDate = document.createElement('div');
           plantingDate.className = 'planting-date';
           plantingDate.append(date, weekday);
@@ -215,7 +216,7 @@
           currentDate.className = 'date-current';
           currentDate.append(currentCaption, plantingDate);
           const corresponding = document.createElement('div'); corresponding.className = 'next-month';
-          const caption = document.createElement('span'); caption.className = 'next-month-caption'; caption.textContent = '下月开车';
+          const caption = document.createElement('span'); caption.className = 'next-month-caption'; caption.textContent = '收菜日';
           const nextDate = document.createElement(item.nextMonth ? 'time' : 'span'); nextDate.className = 'next-month-date';
           if (item.nextMonth) {
             nextDate.dateTime = item.nextMonth.iso;
