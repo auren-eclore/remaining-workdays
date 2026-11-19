@@ -41,13 +41,12 @@
     .date-header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; width: 100%; gap: 10px; }
     .date-current { display: grid; gap: 5px; }
     .date-current .weekday { margin-left: 0; }
-    .next-month { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #f8f9f7; }
-    .date-caption, .next-month-caption { font-size: 10px; color: var(--muted); }
-    .next-month-date { font-size: 12px; color: #748071; line-height: 1.5; }
-    .next-month-weekday { font-size: 11px; color: var(--muted); line-height: 1.4; }
-    .next-month.is-workday { background: #d7edc7; border-color: #9fc68b; box-shadow: inset 3px 0 0 #4a7e36; }
-    .next-month.is-workday .next-month-caption { color: #4a7040; }
-    .next-month.is-workday .next-month-date, .next-month.is-workday .next-month-weekday { color: #244e1e; font-weight: 700; }
+    .next-month { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid #9fc68b; border-radius: 8px; background: #d7edc7; box-shadow: inset 3px 0 0 #4a7e36; }
+    .date-caption { font-size: 10px; color: var(--muted); }
+    .next-month-caption { font-size: 10px; color: #4a7040; }
+    .next-month-date, .next-month-weekday { color: #244e1e; font-weight: 700; }
+    .next-month-date { font-size: 12px; line-height: 1.5; }
+    .next-month-weekday { font-size: 11px; line-height: 1.4; }
     .time-slots { display: grid; width: 100%; gap: 6px; }
     .time-slot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; background: #f3f6f0; border-radius: 6px; padding: 7px 8px; color: #4b6b54; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .time-slot.is-active { background: #fff0cc; color: #704405; box-shadow: inset 0 0 0 1px #dca943; font-weight: 650; }
@@ -204,7 +203,7 @@
           const weekday = document.createElement('span'); weekday.className = 'weekday'; weekday.textContent = item.weekdayLabel;
           const currentCaption = document.createElement('span'); currentCaption.className = 'date-caption'; currentCaption.textContent = '本月种菜';
           const currentDate = document.createElement('div'); currentDate.className = 'date-current'; currentDate.append(currentCaption, date, weekday);
-          const corresponding = document.createElement('div'); corresponding.className = `next-month${item.nextMonth?.isWeekday ? ' is-workday' : ''}`;
+          const corresponding = document.createElement('div'); corresponding.className = 'next-month';
           const caption = document.createElement('span'); caption.className = 'next-month-caption'; caption.textContent = '下月开车';
           const nextDate = document.createElement(item.nextMonth ? 'time' : 'span'); nextDate.className = 'next-month-date';
           if (item.nextMonth) {
